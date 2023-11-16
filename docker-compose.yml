@@ -1,0 +1,56 @@
+version: '3'
+services:
+  db:
+    image: postgres:14.2-alpine
+    container_name: demo-postgres-14.2
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - shared_data:/var/shared
+    command: 
+      "postgres -c 'max_connections=500'"
+    environment:
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    ports:
+      - "5432:5432"
+    networks:
+      - default
+  demo-web:
+    build: .
+    command: "./bin/rails server"
+    tty: true
+    stdin_open: true
+    environment:
+      - POSTGRES_HOST=${POSTGRES_HOST}
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - RAILS_MASTER_KEY=${RAILS_MASTER_KEY}
+    volumes:
+      - .:/usr/src/app
+      - bundle:/usr/local/bundle
+      - rails_cache:/app/tmp/cache
+    depends_on:
+      - db
+    ports:
+      - "3000:3000"
+    networks:
+      - default
+  redis:
+    image: redis
+    container_name: demo-redis
+    ports:
+     - "6379:6379"
+    networks:
+      - default
+      
+networks:
+ default:
+  name: network-fotos
+
+volumes:
+  postgres_data: 
+  bundle:
+  rails_cache: 
+  shared_data:
